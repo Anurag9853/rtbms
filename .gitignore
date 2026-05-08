@@ -1,0 +1,4 @@
+# RTBMS Root .gitignore
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,342 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── CSS Custom Properties — Light / Dark Surfaces ───────────────── */
+:root {
+  --surface-primary:   #ffffff;
+  --surface-secondary: #f5f5f7;
+  --surface-card:      #ffffff;
+  --surface-overlay:   rgba(255,255,255,0.8);
+  --border-color:      rgba(0,0,0,0.08);
+  --text-primary:      #0f0f14;
+  --text-secondary:    #4a4a5a;
+  --text-muted:        #9898a8;
+  --scrollbar-thumb:   #c0392b;
+}
+
+.dark {
+  --surface-primary:   #0f0f14;
+  --surface-secondary: #16161e;
+  --surface-card:      #1a1a24;
+  --surface-overlay:   rgba(15,15,20,0.85);
+  --border-color:      rgba(255,255,255,0.07);
+  --text-primary:      #fafafa;
+  --text-secondary:    #c8c8d0;
+  --text-muted:        #6b6b80;
+}
+
+/* ─── Base Reset & Defaults ────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  border-color: var(--border-color);
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--surface-primary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* ─── Custom Scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: #e74c3c; }
+
+/* ─── Selection ────────────────────────────────────────────────────── */
+::selection {
+  background: rgba(192, 57, 43, 0.3);
+  color: #fafafa;
+}
+
+/* ─── Focus Visible Ring ───────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid #c0392b;
+  outline-offset: 2px;
+}
+
+/* ─── Animated Gradient Mesh Background ────────────────────────────── */
+.bg-mesh-animated {
+  background:
+    radial-gradient(at 40% 20%, hsla(0, 85%, 40%, 0.35) 0px, transparent 50%),
+    radial-gradient(at 80% 0%,  hsla(220, 80%, 50%, 0.25) 0px, transparent 50%),
+    radial-gradient(at 0%  50%, hsla(350, 90%, 30%, 0.25) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, hsla(220, 70%, 35%, 0.15) 0px, transparent 50%),
+    radial-gradient(at 0%  100%, hsla(0, 75%, 25%, 0.2) 0px, transparent 50%),
+    #0f0f14;
+  background-size: 200% 200%;
+  animation: gradientShift 12s ease infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+
+/* ─── Glassmorphism Card ───────────────────────────────────────────── */
+.glass {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.glass-card {
+  background: rgba(26, 26, 36, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+/* ─── Skeleton Shimmer ─────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ─── Pulse Ring (Blood Drop) ──────────────────────────────────────── */
+.pulse-ring {
+  box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.7);
+  animation: pulseRing 2.5s ease-out infinite;
+}
+
+@keyframes pulseRing {
+  0%   { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.7); }
+  70%  { box-shadow: 0 0 0 24px rgba(192, 57, 43, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0); }
+}
+
+/* ─── Ticker / Activity Marquee ────────────────────────────────────── */
+.ticker-wrap { overflow: hidden; white-space: nowrap; }
+.ticker-content {
+  display: inline-flex;
+  gap: 2rem;
+  animation: ticker 35s linear infinite;
+}
+.ticker-content:hover { animation-play-state: paused; }
+
+@keyframes ticker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ─── Gradient Border Button ───────────────────────────────────────── */
+.gradient-border {
+  position: relative;
+  background: transparent;
+}
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(135deg, #c0392b, #e74c3c, #2563eb, #c0392b);
+  background-size: 300% 300%;
+  animation: gradientShift 4s ease infinite;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+/* ─── Grain Texture Overlay ────────────────────────────────────────── */
+.grain-texture::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  background-size: 200px;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 0;
+}
+
+/* ─── Input Focus Glow ─────────────────────────────────────────────── */
+.input-glow-red:focus {
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.2), 0 0 0 1px rgba(192, 57, 43, 0.5);
+  outline: none;
+}
+.input-glow-blue:focus {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2), 0 0 0 1px rgba(37, 99, 235, 0.5);
+  outline: none;
+}
+
+/* ─── Ripple Effect ────────────────────────────────────────────────── */
+.ripple-btn {
+  position: relative;
+  overflow: hidden;
+}
+.ripple-btn::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  width: 0; height: 0;
+  left: 50%; top: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  transform: translate(-50%, -50%);
+  transition: width 0.5s ease, height 0.5s ease, opacity 0.5s ease;
+  opacity: 0;
+}
+.ripple-btn:active::after {
+  width: 300px; height: 300px;
+  opacity: 0;
+  transition: 0s;
+}
+
+/* ─── Floating Animation ───────────────────────────────────────────── */
+.float-animation {
+  animation: floatAnim 6s ease-in-out infinite;
+}
+
+@keyframes floatAnim {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33%       { transform: translateY(-12px) rotate(1deg); }
+  66%       { transform: translateY(-6px) rotate(-1deg); }
+}
+
+/* ─── Tilt Card Perspective ────────────────────────────────────────── */
+.perspective-card {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* ─── Scroll Progress Bar ──────────────────────────────────────────── */
+#scroll-progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #c0392b, #e74c3c, #2563eb);
+  z-index: 9999;
+  transition: width 0.1s ease;
+}
+
+/* ─── Morphing Button ──────────────────────────────────────────────── */
+.morph-btn {
+  border-radius: 12px;
+  transition: border-radius 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.morph-btn:hover {
+  border-radius: 20px;
+  transform: translateY(-2px);
+}
+
+/* ─── Live Pulse Dot ───────────────────────────────────────────────── */
+.pulse-dot {
+  position: relative;
+  display: inline-block;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.pulse-dot::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: inherit;
+  opacity: 0.4;
+  animation: pulseDot 2s ease-out infinite;
+}
+@keyframes pulseDot {
+  0%   { transform: scale(1);   opacity: 0.4; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* ─── Stagger Reveal (used with Framer Motion) ─────────────────────── */
+.stagger-item {
+  opacity: 0;
+  transform: translateY(24px);
+}
+.stagger-item.visible {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+/* ─── Command Palette Backdrop ─────────────────────────────────────── */
+.cmd-backdrop {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ─── Chat Message Bubble ──────────────────────────────────────────── */
+.chat-bubble-ai {
+  background: rgba(37, 99, 235, 0.1);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: 16px 16px 16px 4px;
+}
+.chat-bubble-user {
+  background: rgba(192, 57, 43, 0.15);
+  border: 1px solid rgba(192, 57, 43, 0.2);
+  border-radius: 16px 16px 4px 16px;
+}
+
+/* ─── prefers-reduced-motion ───────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─── Page Transition Wrapper ──────────────────────────────────────── */
+.page-transition-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+/* ─── Gradient Text ────────────────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 40%, #2563eb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-warm {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ffa0a0 50%, #c0392b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Utility classes ──────────────────────────────────────────────── */
+.text-balance { text-wrap: balance; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

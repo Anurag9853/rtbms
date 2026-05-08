@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: rtbms-api
+    runtime: image
+    image:
+      url: docker.io/library/php:8.3-cli
+    repo: https://github.com/PLACEHOLDER/rtbms  # Will be updated after GitHub push
+    buildCommand: |
+      curl -sS https://getcomposer.org/installer | php &&
+      php composer.phar install --no-dev --optimize-autoloader &&
+      php artisan config:cache &&
+      php artisan route:cache &&
+      php artisan event:cache
+    startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
+    envVars:
+      - key: APP_NAME
+        value: RTBMS
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_KEY
+        generateValue: true
+      - key: DB_CONNECTION
+        value: mongodb
+      - key: CACHE_STORE
+        value: file
+      - key: SESSION_DRIVER
+        value: cookie
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: BROADCAST_DRIVER
+        value: log
+      # These must be set manually in Render dashboard:
+      # DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD
+      # FRONTEND_URL, SANCTUM_STATEFUL_DOMAINS

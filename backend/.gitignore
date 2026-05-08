@@ -1,0 +1,20 @@
+# Backend .gitignore
+/vendor/
+/.env
+/.env.backup
+/.env.production
+/storage/*.key
+/storage/logs/*.log
+/bootstrap/cache/*.php
+/public/storage
+/public/hot
+*.sqlite
+*.sqlite-journal
+.phpunit.result.cache
+node_modules/
+npm-debug.log
+Thumbs.db
+.DS_Store
+test_token.php
+test_auth_http.php
+test_sanctum_debug.php
