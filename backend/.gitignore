@@ -18,3 +18,4 @@ Thumbs.db
 test_token.php
 test_auth_http.php
 test_sanctum_debug.php
+test_keytype.php

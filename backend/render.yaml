@@ -1,36 +1,75 @@
 services:
   - type: web
     name: rtbms-api
-    runtime: image
-    image:
-      url: docker.io/library/php:8.3-cli
-    repo: https://github.com/PLACEHOLDER/rtbms  # Will be updated after GitHub push
-    buildCommand: |
-      curl -sS https://getcomposer.org/installer | php &&
-      php composer.phar install --no-dev --optimize-autoloader &&
-      php artisan config:cache &&
-      php artisan route:cache &&
-      php artisan event:cache
-    startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
+    runtime: docker
+    # ─── After you push to GitHub, Render auto-detects the Dockerfile ───────────
+    # Update the repo URL below to your actual GitHub repository.
+    repo: https://github.com/Anurag9853/rtbms.git
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /up
+    autoDeploy: true
+
     envVars:
+      # ── App ──────────────────────────────────────────────────────────────────
       - key: APP_NAME
         value: RTBMS
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
-        value: false
+        value: "false"
       - key: APP_KEY
         generateValue: true
+      - key: APP_URL
+        sync: false        # Set manually in Render dashboard (your .onrender.com URL)
+
+      # ── Database ─────────────────────────────────────────────────────────────
       - key: DB_CONNECTION
         value: mongodb
+      - key: DB_URI
+        sync: false        # Set manually: mongodb+srv://...@...mongodb.net/rtbms
+      - key: DB_DATABASE
+        value: rtbms
+
+      # ── Cache / Session ───────────────────────────────────────────────────────
       - key: CACHE_STORE
         value: file
       - key: SESSION_DRIVER
         value: cookie
+      - key: SESSION_LIFETIME
+        value: "120"
       - key: QUEUE_CONNECTION
         value: sync
       - key: BROADCAST_DRIVER
         value: log
-      # These must be set manually in Render dashboard:
-      # DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD
-      # FRONTEND_URL, SANCTUM_STATEFUL_DOMAINS
+
+      # ── Auth ─────────────────────────────────────────────────────────────────
+      - key: SANCTUM_STATEFUL_DOMAINS
+        sync: false        # Set manually: your-app.vercel.app
+
+      # ── CORS ─────────────────────────────────────────────────────────────────
+      - key: FRONTEND_URL
+        sync: false        # Set manually: https://your-app.vercel.app
+
+      # ── Mail (log driver for now) ─────────────────────────────────────────────
+      - key: MAIL_MAILER
+        value: log
+      - key: MAIL_FROM_ADDRESS
+        value: noreply@rtbms.app
+      - key: MAIL_FROM_NAME
+        value: RTBMS
+
+      # ── Optional (leave blank if not using) ──────────────────────────────────
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PUSHER_APP_ID
+        sync: false
+      - key: PUSHER_APP_KEY
+        sync: false
+      - key: PUSHER_APP_SECRET
+        sync: false
+      - key: PUSHER_APP_CLUSTER
+        value: ap2
+      - key: MAPBOX_TOKEN
+        sync: false

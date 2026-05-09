@@ -23,7 +23,7 @@ RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interactio
 # Copy the rest of the application
 COPY . .
 
-# Run post-install scripts
+# Run post-install scripts (generates autoload files)
 RUN composer run-script post-autoload-dump
 
 # Create necessary directories and set permissions
@@ -31,13 +31,13 @@ RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions \
     storage/framework/views bootstrap/cache && \
     chmod -R 775 storage bootstrap/cache
 
-# Cache Laravel configuration
-RUN php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan event:cache
+# Copy the startup script
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Expose port (Render sets $PORT dynamically)
 EXPOSE 8000
 
-# Start command - Render will set PORT env var
-CMD php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
+# Entrypoint caches config at runtime then exec's the CMD
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["php", "artisan", "serve", "--host=0.0.0.0"]
