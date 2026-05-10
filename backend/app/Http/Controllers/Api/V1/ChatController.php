@@ -46,7 +46,6 @@ class ChatController extends Controller
             'Content-Type'                => 'text/event-stream',
             'Cache-Control'               => 'no-cache',
             'X-Accel-Buffering'           => 'no',
-            'Access-Control-Allow-Origin' => config('app.frontend_url', '*'),
         ]);
     }
 
