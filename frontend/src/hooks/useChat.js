@@ -113,6 +113,10 @@ export function useChat({ apiBase = '/api/v1', sessionId = null } = {}) {
                     accumulated += json.token;
                     updateLastAiMessage(json.token);
                   }
+                  if (json.error) {
+                    accumulated += json.error;
+                    updateLastAiMessage(json.error);
+                  }
                   if (json.done) break;
                 } catch {}
               }
