@@ -18,7 +18,7 @@ WORKDIR /app
 COPY composer.json composer.lock ./
 
 # Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
+RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction --ignore-platform-req=ext-mongodb
 
 # Copy the rest of the application
 COPY . .
