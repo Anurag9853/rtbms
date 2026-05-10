@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Navigation, Layers } from 'lucide-react';
 import { staggerContainer, fadeInUp } from '../../lib/design-system';
+import toast from 'react-hot-toast';
 
 // Mock blood bank data for map preview (no Mapbox token needed for preview)
 const mockBanks = [
@@ -173,15 +174,15 @@ export function LiveMapPreview() {
 
           {/* Bottom controls */}
           <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between z-20">
-            <button className="inline-flex items-center gap-2 glass text-white text-sm px-4 py-2.5 rounded-pill border border-white/15 hover:bg-white/10 transition-colors">
+            <button onClick={() => toast('Sign in to access interactive map', { icon: '🗺️' })} className="inline-flex items-center gap-2 glass text-white text-sm px-4 py-2.5 rounded-pill border border-white/15 hover:bg-white/10 transition-colors">
               <Navigation className="w-4 h-4 text-crimson-400" />
               Find Near Me
             </button>
             <div className="flex gap-2">
-              <button className="glass p-2.5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors text-white/60 hover:text-white">
+              <button onClick={() => toast.success('Map layers unlocked after sign in')} className="glass p-2.5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors text-white/60 hover:text-white">
                 <Layers className="w-4 h-4" />
               </button>
-              <button className="glass p-2.5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors text-white/60 hover:text-white">
+              <button onClick={() => toast.success('Save locations after sign in')} className="glass p-2.5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors text-white/60 hover:text-white">
                 <MapPin className="w-4 h-4" />
               </button>
             </div>

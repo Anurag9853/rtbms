@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Heart, Search, Zap, MapPin } from 'lucide-react';
 import { TypingAnimation } from '../ui/TypingAnimation';
 import { ActivityTicker } from '../ui/ActivityTicker';
@@ -18,6 +18,7 @@ const stats = [
 ];
 
 export function HeroSection() {
+  const navigate = useNavigate();
   const [searchGroup, setSearchGroup] = useState('');
   const [searchCity, setSearchCity] = useState('');
   const containerRef = useRef(null);
@@ -70,7 +71,7 @@ export function HeroSection() {
         </div>
 
         <div className="hidden md:flex items-center gap-8">
-          {['Features', 'How It Works', 'Donors', 'Hospitals'].map((item) => (
+          {['Features', 'How It Works', 'Trust', 'Campaigns'].map((item) => (
             <a
               key={item}
               href={`#${item.toLowerCase().replace(/ /g, '-')}`}
@@ -159,6 +160,7 @@ export function HeroSection() {
           className="flex flex-wrap items-center justify-center gap-4 mb-12"
         >
           <MagneticButton
+            onClick={() => navigate('/register')}
             className="inline-flex items-center gap-2.5 bg-crimson-700 hover:bg-crimson-600 text-white text-base font-semibold px-7 py-3.5 rounded-pill shadow-glow-red"
           >
             <span className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
@@ -167,6 +169,7 @@ export function HeroSection() {
           </MagneticButton>
 
           <MagneticButton
+            onClick={() => navigate('/register?role=donor')}
             className="inline-flex items-center gap-2.5 gradient-border text-white text-base font-medium px-7 py-3.5 rounded-pill bg-white/5 hover:bg-white/10 border border-white/15"
           >
             <Heart className="w-4 h-4 text-crimson-400" />
@@ -209,6 +212,7 @@ export function HeroSection() {
               </div>
             </div>
             <button
+              onClick={() => navigate(`/login?redirect=search&group=${encodeURIComponent(searchGroup)}&city=${encodeURIComponent(searchCity)}`)}
               className="inline-flex items-center gap-2 bg-crimson-700 hover:bg-crimson-600 text-white px-5 py-2.5 rounded-input text-sm font-semibold transition-all ripple-btn whitespace-nowrap"
               aria-label="Search for blood"
             >

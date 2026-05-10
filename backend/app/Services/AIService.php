@@ -7,7 +7,7 @@ use App\Models\BloodRequest;
 use App\Models\Campaign;
 use App\Models\User;
 use App\Models\BloodBank;
-use OpenAI\Laravel\Facades\OpenAI;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -39,28 +39,68 @@ class AIService
             $history = $this->getHistory($sessionId);
             $systemPrompt = $this->buildSystemPrompt($message, $user);
 
-            $messages = [
-                ['role' => 'system', 'content' => $systemPrompt],
-                ...$history,
-                ['role' => 'user', 'content' => $message],
+            $contents = [];
+            foreach ($history as $msg) {
+                $contents[] = [
+                    'role' => $msg['role'] === 'assistant' ? 'model' : 'user',
+                    'parts' => [['text' => $msg['content']]]
+                ];
+            }
+            $contents[] = [
+                'role' => 'user',
+                'parts' => [['text' => $message]]
             ];
 
-            $stream = OpenAI::chat()->createStreamed([
-                'model'       => self::MODEL,
-                'messages'    => $messages,
-                'max_tokens'  => self::MAX_TOKENS,
-                'temperature' => 0.5,
-            ]);
+            $payload = [
+                'systemInstruction' => [
+                    'parts' => [['text' => $systemPrompt]]
+                ],
+                'contents' => $contents,
+                'generationConfig' => [
+                    'temperature' => 0.5,
+                    'maxOutputTokens' => self::MAX_TOKENS,
+                ]
+            ];
+
+            $apiKey = env('GEMINI_API_KEY');
+            if (!$apiKey) {
+                throw new \Exception('GEMINI_API_KEY is not set');
+            }
+
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key={$apiKey}";
+
+            $opts = [
+                'http' => [
+                    'method'  => 'POST',
+                    'header'  => "Content-Type: application/json\r\n",
+                    'content' => json_encode($payload),
+                    'timeout' => 30
+                ]
+            ];
+            $context = stream_context_create($opts);
+            $stream = fopen($url, 'r', false, $context);
+
+            if (!$stream) {
+                throw new \Exception("Failed to open stream to Gemini API");
+            }
 
             $fullResponse = '';
 
-            foreach ($stream as $response) {
-                $token = $response->choices[0]->delta->content ?? '';
-                if ($token === '') continue;
+            while (!feof($stream)) {
+                $line = fgets($stream);
+                if ($line !== false && str_starts_with($line, 'data: ')) {
+                    $jsonString = substr($line, 6);
+                    if (trim($jsonString) === '[DONE]') continue;
 
-                $fullResponse .= $token;
-                yield "data: " . json_encode(['token' => $token]) . "\n\n";
+                    $json = json_decode($jsonString, true);
+                    if (isset($json['candidates'][0]['content']['parts'][0]['text'])) {
+                        $token = $json['candidates'][0]['content']['parts'][0]['text'];
+                        $fullResponse .= $token;
+                        yield "data: " . json_encode(['token' => $token]) . "\n\n";
+                    }
+                }
             }
+            fclose($stream);
 
             // Store assistant response in history
             $history[] = ['role' => 'user',      'content' => $message];
@@ -80,19 +120,38 @@ class AIService
      */
     public function getResponse(string $message, string $sessionId, ?User $user = null): string
     {
-        $systemPrompt = $this->buildSystemPrompt($message, $user);
+        try {
+            $systemPrompt = $this->buildSystemPrompt($message, $user);
 
-        $response = OpenAI::chat()->create([
-            'model'       => self::MODEL,
-            'messages'    => [
-                ['role' => 'system', 'content' => $systemPrompt],
-                ['role' => 'user',   'content' => $message],
-            ],
-            'max_tokens'  => self::MAX_TOKENS,
-            'temperature' => 0.4,
-        ]);
+            $payload = [
+                'systemInstruction' => [
+                    'parts' => [['text' => $systemPrompt]]
+                ],
+                'contents' => [
+                    [
+                        'role' => 'user',
+                        'parts' => [['text' => $message]]
+                    ]
+                ],
+                'generationConfig' => [
+                    'temperature' => 0.4,
+                    'maxOutputTokens' => self::MAX_TOKENS,
+                ]
+            ];
 
-        return $response->choices[0]->message->content;
+            $apiKey = env('GEMINI_API_KEY');
+            if (!$apiKey) return '';
+
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}";
+
+            $response = Http::post($url, $payload);
+            $json = $response->json();
+
+            return $json['candidates'][0]['content']['parts'][0]['text'] ?? '';
+        } catch (\Exception $e) {
+            Log::error('AIService getResponse error', ['error' => $e->getMessage()]);
+            return '';
+        }
     }
 
     // ── System Prompt Builder ───────────────────────────────────────────────

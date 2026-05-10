@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Heart, Mail, CheckCircle, ExternalLink } from 'lucide-react';
 import { staggerContainer, fadeInUp } from '../../lib/design-system';
+import toast from 'react-hot-toast';
 
 const footerLinks = {
   Product: ['Features', 'Analytics', 'AI Assistant', 'Emergency Mode', 'Blood Map'],
@@ -121,12 +122,12 @@ export function CTAFooter() {
               <ul className="space-y-2.5">
                 {links.map((link) => (
                   <li key={link}>
-                    <a
-                      href="#"
+                    <button
+                      onClick={(e) => { e.preventDefault(); toast('Coming soon!', { icon: '🚀' }); }}
                       className="text-sm text-white/50 hover:text-white/80 transition-colors"
                     >
                       {link}
-                    </a>
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -155,14 +156,14 @@ export function CTAFooter() {
           {/* Socials */}
           <div className="flex items-center gap-4">
             {['Twitter/X', 'GitHub', 'LinkedIn', 'Email'].map((label) => (
-              <a
+              <button
                 key={label}
-                href="#"
+                onClick={(e) => { e.preventDefault(); toast('Social links coming soon!'); }}
                 aria-label={label}
                 className="w-8 h-8 glass rounded-full flex items-center justify-center border border-white/10 text-white/40 hover:text-white hover:border-white/25 transition-all text-xs font-bold"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
-              </a>
+              </button>
             ))}
           </div>
         </div>

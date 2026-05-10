@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Zap, ThumbsUp, Copy, Mic, Maximize2, X } from 'lucide-react';
 import { TypingAnimation } from '../ui/TypingAnimation';
 import { staggerContainer, fadeInUp } from '../../lib/design-system';
+import toast from 'react-hot-toast';
 
 const DEMO_MESSAGES = [
   { role: 'user', text: 'Is O- blood available in Delhi?' },
@@ -96,10 +97,10 @@ export function AIChatbotShowcase() {
                   </p>
                 </div>
                 <div className="ml-auto flex items-center gap-2 text-white/30">
-                  <button className="hover:text-white/60 transition-colors p-1" aria-label="Expand chat">
+                  <button onClick={() => toast('Sign in to open full-screen chat', { icon: '🔒' })} className="hover:text-white/60 transition-colors p-1" aria-label="Expand chat">
                     <Maximize2 className="w-4 h-4" />
                   </button>
-                  <button className="hover:text-white/60 transition-colors p-1" aria-label="Close chat">
+                  <button onClick={() => toast('This is just a demo!')} className="hover:text-white/60 transition-colors p-1" aria-label="Close chat">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -145,10 +146,10 @@ export function AIChatbotShowcase() {
                     </div>
                     {/* Reactions */}
                     <div className="flex items-center gap-3">
-                      <button className="flex items-center gap-1 text-xs text-white/30 hover:text-white/60 transition-colors">
+                      <button onClick={() => toast.success('Feedback recorded!')} className="flex items-center gap-1 text-xs text-white/30 hover:text-white/60 transition-colors">
                         <ThumbsUp className="w-3.5 h-3.5" /> Helpful
                       </button>
-                      <button className="flex items-center gap-1 text-xs text-white/30 hover:text-white/60 transition-colors">
+                      <button onClick={() => toast.success('Copied to clipboard!')} className="flex items-center gap-1 text-xs text-white/30 hover:text-white/60 transition-colors">
                         <Copy className="w-3.5 h-3.5" /> Copy
                       </button>
                     </div>
@@ -187,7 +188,7 @@ export function AIChatbotShowcase() {
                   {suggestions.slice(0, 4).map((s) => (
                     <button
                       key={s}
-                      onClick={() => setInputVal(s)}
+                      onClick={() => { setInputVal(s); toast.success('Sign up to send messages!'); }}
                       className="text-xs px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/50 hover:bg-electric-600/15 hover:border-electric-600/30 hover:text-electric-300 transition-all duration-200 whitespace-nowrap"
                     >
                       {s}
@@ -207,10 +208,11 @@ export function AIChatbotShowcase() {
                     className="flex-1 bg-transparent text-sm text-white placeholder-white/25 outline-none"
                   />
                   <div className="flex items-center gap-2 text-white/30">
-                    <button className="hover:text-white/60 transition-colors p-1" aria-label="Voice input">
+                    <button onClick={() => toast.error('Microphone access requires sign in')} className="hover:text-white/60 transition-colors p-1" aria-label="Voice input">
                       <Mic className="w-4 h-4" />
                     </button>
                     <button
+                      onClick={() => toast.success('Sign up to chat with AI!')}
                       className="bg-electric-600 hover:bg-electric-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
                       aria-label="Send message"
                     >
