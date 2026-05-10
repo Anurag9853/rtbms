@@ -23,7 +23,7 @@ class ChatController extends Controller
      * POST /api/v1/chat
      * Streams AI response via Server-Sent Events.
      */
-    public function stream(Request $request): Response
+    public function stream(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse
     {
         $request->validate([
             'message'    => 'required|string|max:1000',
