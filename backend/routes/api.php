@@ -36,6 +36,7 @@ Route::prefix('v1')->group(function () {
 
     // AI chat suggestions (public — for landing page preview)
     Route::get('chat/suggestions', [ChatController::class, 'suggestions']);
+    Route::post('chat',            [ChatController::class, 'stream']);
 
     // ── Protected routes (Sanctum auth required) ──────────────────────────
 
@@ -48,7 +49,6 @@ Route::prefix('v1')->group(function () {
         Route::patch('auth/password', [AuthController::class, 'changePassword']);
 
         // AI Chat (streaming)
-        Route::post('chat',            [ChatController::class, 'stream']);
         Route::delete('chat/history',  [ChatController::class, 'clearHistory']);
 
         // Inventory management (blood bank admin)

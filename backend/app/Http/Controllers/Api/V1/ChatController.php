@@ -32,7 +32,7 @@ class ChatController extends Controller
 
         $message   = $request->string('message')->trim()->toString();
         $sessionId = $request->input('session_id', Str::uuid()->toString());
-        $user      = $request->user(); // null for unauthenticated preview
+        $user      = $request->user('sanctum'); // null for unauthenticated preview
 
         $generator = $this->ai->streamResponse($message, $sessionId, $user);
 

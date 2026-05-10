@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useAuthStore } from '../stores/authStore';
 
 const INITIAL_MESSAGES = [
   {
@@ -81,9 +82,13 @@ export function useChat({ apiBase = '/api/v1', sessionId = null } = {}) {
       let responded = false;
 
       try {
+        const token = useAuthStore.getState().token;
+        const headers = { 'Content-Type': 'application/json', Accept: 'text/event-stream' };
+        if (token) headers.Authorization = `Bearer ${token}`;
+
         const res = await fetch(`${apiBase}/chat`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+          headers,
           body: JSON.stringify({ message: text, session_id: currentSid }),
           signal: controller.signal,
         });
