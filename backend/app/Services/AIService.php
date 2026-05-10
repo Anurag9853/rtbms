@@ -62,12 +62,12 @@ class AIService
                 ]
             ];
 
-            $apiKey = env('GEMINI_API_KEY');
+            $apiKey = trim(env('GEMINI_API_KEY', ''));
             if (!$apiKey) {
                 throw new \Exception('GEMINI_API_KEY is not set');
             }
 
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key={$apiKey}";
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key={$apiKey}";
 
             $opts = [
                 'http' => [
@@ -142,7 +142,7 @@ class AIService
             $apiKey = env('GEMINI_API_KEY');
             if (!$apiKey) return '';
 
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}";
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={$apiKey}";
 
             $response = Http::post($url, $payload);
             $json = $response->json();
