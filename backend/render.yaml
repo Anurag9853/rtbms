@@ -61,7 +61,7 @@ services:
         value: RTBMS
 
       # ── Optional (leave blank if not using) ──────────────────────────────────
-      - key: OPENAI_API_KEY
+      - key: GEMINI_API_KEY
         sync: false
       - key: PUSHER_APP_ID
         sync: false
