@@ -16,6 +16,7 @@ export function LoginPage() {
   const [showPw, setShowPw] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [googleMsg, setGoogleMsg] = useState(false);
 
   const { login } = useAuth();
 
@@ -226,9 +227,10 @@ export function LoginPage() {
               <div className="flex-1 h-px bg-white/8" />
             </div>
 
-            {/* Google OAuth (UI only) */}
+            {/* Google OAuth */}
             <button
               type="button"
+              onClick={() => { setGoogleMsg(true); setTimeout(() => setGoogleMsg(false), 3500); }}
               className="w-full glass border border-white/12 hover:bg-white/8 text-white/70 hover:text-white text-sm font-medium py-3 rounded-input transition-all flex items-center justify-center gap-3"
             >
               <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none">
@@ -239,6 +241,11 @@ export function LoginPage() {
               </svg>
               Continue with Google
             </button>
+            {googleMsg && (
+              <p className="text-xs text-amber-400/80 text-center -mt-1">
+                ⚠ Google sign-in is not yet configured on this server. Please use email &amp; password.
+              </p>
+            )}
           </form>
 
           <p className="text-sm text-white/40 text-center mt-8">

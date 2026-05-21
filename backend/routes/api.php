@@ -57,6 +57,8 @@ Route::prefix('v1')->group(function () {
 
         // Blood Requests
         Route::apiResource('requests', BloodRequestController::class);
+        Route::post('requests/{request}/donate', [BloodRequestController::class, 'donate']);
+        Route::patch('donations/{donation}/status', [BloodRequestController::class, 'updateDonationStatus']);
 
         // Donors
         Route::prefix('donors')->group(function () {

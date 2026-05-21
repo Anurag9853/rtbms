@@ -31,14 +31,14 @@ class EmergencyBroadcast implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
-            'id'             => $this->request->id,
+            '_id'            => (string) $this->request->_id,
             'blood_group'    => $this->request->blood_group,
             'units_needed'   => $this->request->units_needed,
             'urgency'        => $this->request->urgency,
             'hospital_name'  => $this->request->hospital_name,
             'hospital_city'  => $this->request->hospital_city,
             'patient_name'   => $this->request->patient_name,
-            'created_at'     => $this->request->created_at->toISOString(),
+            'created_at'     => optional($this->request->created_at)->toISOString() ?? now()->toISOString(),
         ];
     }
 }

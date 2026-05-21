@@ -34,16 +34,16 @@ class DonorController extends Controller
 
     public function show(User $user): JsonResponse
     {
-        $user->load(['donations' => fn ($q) => $q->completed()->latest('donated_at')->limit(10)]);
+        $user->load(['donations.bloodBank:_id,name,city', 'donations.request:_id,hospital_name']);
 
         return response()->json([
             'data' => [
                 ...$user->only('_id', 'name', 'blood_group', 'city', 'phone', 'is_available'),
-                'total_donations'   => $user->donations()->completed()->count(),
+                'total_donations'   => $user->donations()->count(),
                 'is_eligible'       => $user->isEligibleToDonate(),
                 'days_until_eligible' => $user->daysUntilEligible(),
-                'last_donation'     => $user->donations()->completed()->latest('donated_at')->first()?->donated_at,
-                'recent_donations'  => $user->donations,
+                'last_donation'     => $user->donations()->latest('created_at')->first()?->created_at,
+                'recent_donations'  => $user->donations()->latest('created_at')->limit(10)->get(),
             ],
         ]);
     }
@@ -63,8 +63,8 @@ class DonorController extends Controller
     public function donationHistory(User $user): JsonResponse
     {
         $history = $user->donations()
-            ->with('bloodBank:_id,name,city')
-            ->latest('donated_at')
+            ->with(['bloodBank:_id,name,city', 'request:_id,hospital_name'])
+            ->latest('created_at')
             ->paginate(20);
 
         return response()->json($history);
@@ -75,8 +75,8 @@ class DonorController extends Controller
         return response()->json([
             'is_eligible'          => $user->isEligibleToDonate(),
             'days_until_eligible'  => $user->daysUntilEligible(),
-            'last_donation_date'   => $user->donations()->completed()->latest('donated_at')->first()?->donated_at,
-            'total_donations'      => $user->donations()->completed()->count(),
+            'last_donation_date'   => $user->donations()->latest('created_at')->first()?->created_at,
+            'total_donations'      => $user->donations()->count(),
         ]);
     }
 }

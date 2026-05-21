@@ -5,7 +5,9 @@ import { PulseDot } from '../../components/ui/PulseDot';
 import { fadeInUp, staggerContainer } from '../../lib/design-system';
 import { requestsApi } from '../../services/api';
 import { subscribeToEmergencies } from '../../services/echoService';
+import { useAuthStore } from '../../stores/authStore';
 import toast from 'react-hot-toast';
+import { DonateModal } from './RequestsPage';
 
 const FALLBACK = [
   { _id: '1', blood_group: 'O-',  patient_name: 'ICU Patient #4', hospital_name: 'Max Hospital',       hospital_city: 'Delhi',   urgency: 'critical', units_needed: 3, created_at: new Date(Date.now()-120000).toISOString() },
@@ -17,15 +19,20 @@ function timeAgo(iso) {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
   if (m < 60)  return `${m}m ago`;
-  return `${Math.floor(m / 60)}h ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24)  return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
 }
 
 export function EmergencyFeed() {
+  const { user } = useAuthStore();
   const [emergencies, setEmergencies] = useState([]);
   const [loading, setLoading]         = useState(true);
   const [isLive, setIsLive]           = useState(false);
   const [newCount, setNewCount]       = useState(0);
   const [notifEnabled, setNotifEnabled] = useState(false);
+  const [donateRequest, setDonateRequest] = useState(null);
+  const [donating, setDonating] = useState(false);
   const audioRef = useRef(null);
 
   const fetchEmergencies = useCallback(async () => {
@@ -58,8 +65,33 @@ export function EmergencyFeed() {
     return cleanup;
   }, [fetchEmergencies]);
 
-  const handleHelp = (em) => {
-    toast.success(`Your response for ${em.blood_group} has been sent to ${em.hospital_name}!`, { duration: 5000 });
+  const handleHelp = async (em) => {
+    const id = em._id ?? em.id;
+    if (user?.role === 'admin' || user?.role === 'blood_bank') {
+      try {
+        await requestsApi.update(id, { status: 'reviewing' });
+        toast.success(`You are now reviewing the request for ${em.patient_name}`);
+        fetchEmergencies();
+      } catch {
+        toast.error('Failed to update request');
+      }
+    } else {
+      setDonateRequest(em);
+    }
+  };
+
+  const handleDonateSubmit = async (req, units) => {
+    setDonating(true);
+    try {
+      await requestsApi.donate(req._id || req.id, units);
+      toast.success(`Successfully pledged ${units} unit(s) for ${req.patient_name}!`);
+      setDonateRequest(null);
+      fetchEmergencies();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to submit donation.');
+    } finally {
+      setDonating(false);
+    }
   };
 
   const requestNotifications = async () => {
@@ -186,13 +218,18 @@ export function EmergencyFeed() {
                       </div>
                     </div>
                     <div className="flex gap-2 flex-shrink-0">
-                      <button
-                        onClick={() => handleHelp(em)}
-                        className="bg-crimson-700 hover:bg-crimson-600 text-white text-sm font-semibold px-4 py-2 rounded-input transition-all ripple-btn"
+                      {user?.role !== 'hospital' && (
+                        <button
+                          onClick={() => handleHelp(em)}
+                          className="bg-crimson-700 hover:bg-crimson-600 text-white text-sm font-semibold px-4 py-2 rounded-input transition-all ripple-btn"
+                        >
+                          I Can Help
+                        </button>
+                      )}
+                      <button 
+                        onClick={() => toast('Detailed view coming soon!', { icon: 'ℹ️' })}
+                        className="glass border border-white/15 text-white/60 hover:text-white text-sm px-4 py-2 rounded-input transition-all"
                       >
-                        I Can Help
-                      </button>
-                      <button className="glass border border-white/15 text-white/60 hover:text-white text-sm px-4 py-2 rounded-input transition-all">
                         Details
                       </button>
                     </div>
@@ -215,6 +252,17 @@ export function EmergencyFeed() {
           </AnimatePresence>
         </motion.div>
       )}
+
+      <AnimatePresence>
+        {donateRequest && (
+          <DonateModal
+            request={donateRequest}
+            onClose={() => setDonateRequest(null)}
+            onSubmit={handleDonateSubmit}
+            loading={donating}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -27,8 +27,6 @@ class User extends Model implements AuthenticatableContract
         'email_verified_at' => 'datetime',
         'password'          => 'hashed',
         'is_available'      => 'boolean',
-        'location'          => 'array',
-        'meta'              => 'array',
     ];
 
     protected $attributes = [
@@ -108,7 +106,7 @@ class User extends Model implements AuthenticatableContract
 
     public function donations()
     {
-        return $this->hasMany(Donation::class);
+        return $this->hasMany(Donation::class, 'donor_id');
     }
 
     public function requests()
@@ -143,23 +141,23 @@ class User extends Model implements AuthenticatableContract
     public function isEligibleToDonate(): bool
     {
         $lastDonation = $this->donations()
-            ->where('status', 'completed')
-            ->latest('donated_at')
+            ->whereIn('status', ['scheduled', 'completed'])
+            ->latest('created_at')
             ->first();
 
         if (!$lastDonation) return true;
-        return now()->diffInDays($lastDonation->donated_at) >= 90;
+        return now()->diffInDays($lastDonation->created_at) >= 45;
     }
 
     public function daysUntilEligible(): int
     {
         $lastDonation = $this->donations()
-            ->where('status', 'completed')
-            ->latest('donated_at')
+            ->whereIn('status', ['scheduled', 'completed'])
+            ->latest('created_at')
             ->first();
 
         if (!$lastDonation) return 0;
-        $diff = now()->diffInDays($lastDonation->donated_at);
-        return max(0, 90 - $diff);
+        $diff = now()->diffInDays($lastDonation->created_at);
+        return max(0, 45 - $diff);
     }
 }

@@ -50,6 +50,14 @@ export const requestsApi = {
   /** GET /requests/emergency */
   getEmergencies: () =>
     API.get('/requests/emergency').then((r) => r.data),
+
+  /** POST /requests/:id/donate */
+  donate: (id, units) =>
+    API.post(`/requests/${id}/donate`, { units }).then((r) => r.data),
+
+  /** PATCH /donations/:id/status */
+  updateDonationStatus: (id, status) =>
+    API.patch(`/donations/${id}/status`, { status }).then((r) => r.data),
 };
 
 // ── Donors ───────────────────────────────────────────────────────────────────

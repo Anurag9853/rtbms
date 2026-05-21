@@ -74,7 +74,7 @@ export function ChatInterface({ onClose, defaultExpanded = false }) {
           <p className="text-sm font-semibold text-white leading-none">RTBMS AI</p>
           <p className="text-xs text-electric-400 mt-0.5 flex items-center gap-1">
             <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse inline-block" />
-            GPT-4o · Online
+            Gemini 2.5 Flash · Online
           </p>
         </div>
         <div className="flex items-center gap-1.5">

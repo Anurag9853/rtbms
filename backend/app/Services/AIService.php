@@ -158,7 +158,7 @@ class AIService
 
     private function buildSystemPrompt(string $message, ?User $user): string
     {
-        $liveContext = $this->getLiveContext($message);
+        $liveContext = $this->getLiveContext($message, $user);
         $userContext = $user ? $this->getUserContext($user) : 'Unauthenticated user.';
 
         return <<<PROMPT
@@ -187,32 +187,47 @@ PROMPT;
 
     // ── Live Database Context ───────────────────────────────────────────────
 
-    private function getLiveContext(string $message): string
+    private function getLiveContext(string $message, ?User $user): string
     {
         $lower = strtolower($message);
+        $role  = $user->role ?? 'guest';
 
         // Cache the expensive DB queries for 30 seconds
-        return Cache::remember("ai_context_{$this->hashMessage($message)}", self::CACHE_TTL, function () use ($lower) {
+        return Cache::remember("ai_context_{$role}_{$this->hashMessage($message)}", self::CACHE_TTL, function () use ($lower, $role) {
             $parts = [];
 
-            // Always include: overall inventory summary
-            $parts[] = $this->getInventorySummary();
-
-            // Include based on detected intent
-            if (str_contains($lower, 'emergency') || str_contains($lower, 'urgent') || str_contains($lower, 'critical')) {
+            if ($role === 'admin') {
+                $parts[] = $this->getDetailedInventory();
+                $parts[] = $this->getDetailedDonorStats();
                 $parts[] = $this->getActiveEmergencies();
-            }
-
-            if (str_contains($lower, 'campaign') || str_contains($lower, 'blood drive') || str_contains($lower, 'event')) {
                 $parts[] = $this->getUpcomingCampaigns();
-            }
-
-            if (str_contains($lower, 'donor') || str_contains($lower, 'eligible')) {
-                $parts[] = $this->getDonorStats();
-            }
-
-            if (str_contains($lower, 'bank') || str_contains($lower, 'nearest') || str_contains($lower, 'location')) {
                 $parts[] = $this->getBloodBankList();
+            } elseif ($role === 'hospital') {
+                $parts[] = $this->getInventorySummary();
+                $parts[] = $this->getActiveEmergencies();
+                $parts[] = $this->getBloodBankList();
+            } elseif ($role === 'donor') {
+                $parts[] = $this->getInventorySummary();
+                $parts[] = $this->getUpcomingCampaigns();
+                $parts[] = $this->getActiveEmergencies();
+            } else {
+                $parts[] = $this->getInventorySummary();
+
+                if (str_contains($lower, 'emergency') || str_contains($lower, 'urgent') || str_contains($lower, 'critical')) {
+                    $parts[] = $this->getActiveEmergencies();
+                }
+
+                if (str_contains($lower, 'campaign') || str_contains($lower, 'blood drive') || str_contains($lower, 'event')) {
+                    $parts[] = $this->getUpcomingCampaigns();
+                }
+
+                if (str_contains($lower, 'donor') || str_contains($lower, 'eligible')) {
+                    $parts[] = $this->getDonorStats();
+                }
+
+                if (str_contains($lower, 'bank') || str_contains($lower, 'nearest') || str_contains($lower, 'location')) {
+                    $parts[] = $this->getBloodBankList();
+                }
             }
 
             return implode("\n\n", array_filter($parts));
@@ -235,6 +250,51 @@ PROMPT;
             return implode("\n", $lines);
         } catch (\Exception) {
             return "Inventory data: Currently unavailable (DB connecting).";
+        }
+    }
+
+    private function getDetailedInventory(): string
+    {
+        try {
+            $banks = BloodBank::active()->limit(10)->get();
+            if ($banks->isEmpty()) return $this->getInventorySummary();
+
+            $lines = ["**Detailed Blood Inventory (Per Bank):**"];
+            foreach ($banks as $bank) {
+                $inventory = BloodInventory::where('blood_bank_id', $bank->id)->get();
+                $summary = [];
+                foreach (['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'] as $g) {
+                    $units = $inventory->where('blood_group', $g)->sum('units_available');
+                    if ($units > 0) $summary[] = "{$g}: {$units}u";
+                }
+                $invStr = empty($summary) ? "No stock" : implode(", ", $summary);
+                $lines[] = "- **{$bank->name}**: {$invStr}";
+            }
+            return implode("\n", $lines);
+        } catch (\Exception) {
+            return $this->getInventorySummary();
+        }
+    }
+
+    private function getDetailedDonorStats(): string
+    {
+        try {
+            $total     = User::donors()->count();
+            $available = User::donors()->available()->count();
+            $lines = ["**Detailed Donor Stats:** {$total} total, {$available} available today."];
+            
+            $topDonors = User::donors()->latest()->limit(5)->get();
+            if ($topDonors->isNotEmpty()) {
+                $lines[] = "\n**Recent Registered Donors (Admin view):**";
+                foreach ($topDonors as $d) {
+                    $group = $d->blood_group ?? 'Unknown';
+                    $city = $d->city ?? 'Unknown city';
+                    $lines[] = "- {$d->name} ({$group}) · {$city}";
+                }
+            }
+            return implode("\n", $lines);
+        } catch (\Exception) {
+            return $this->getDonorStats();
         }
     }
 

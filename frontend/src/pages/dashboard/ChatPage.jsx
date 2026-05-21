@@ -13,7 +13,7 @@ export function ChatPage() {
       >
         <h1 className="text-2xl font-black text-white mb-0.5">AI Assistant</h1>
         <p className="text-sm text-white/40">
-          Powered by GPT-4o · Real-time blood database access · Streaming responses
+          Powered by Gemini 2.5 Flash · Real-time blood database access · Streaming responses
         </p>
       </motion.div>
 

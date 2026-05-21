@@ -16,6 +16,22 @@ const FALLBACK_REQUESTS = [
   { _id: 'r3', patient_name: 'Raj Patel',   blood_group: 'B+', units_needed: 1, urgency: 'routine',  status: 'fulfilled', created_at: new Date(Date.now()-86400000).toISOString(), hospital_name: 'AIIMS',         hospital_city: 'Delhi' },
 ];
 
+const COMPATIBILITY = {
+  'A+':  ['A+', 'AB+'],
+  'A-':  ['A+', 'A-', 'AB+', 'AB-'],
+  'B+':  ['B+', 'AB+'],
+  'B-':  ['B+', 'B-', 'AB+', 'AB-'],
+  'AB+': ['AB+'],
+  'AB-': ['AB+', 'AB-'],
+  'O+':  ['O+', 'A+', 'B+', 'AB+'],
+  'O-':  ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-']
+};
+
+function canDonate(donorGroup, recipientGroup) {
+  if (!donorGroup || !recipientGroup) return true;
+  return COMPATIBILITY[donorGroup]?.includes(recipientGroup) || false;
+}
+
 const STATUS_CONFIG = {
   submitted:  { label: 'Submitted',  Icon: Circle,      color: 'text-white/40' },
   reviewing:  { label: 'Reviewing',  Icon: Clock,       color: 'text-amber-400' },
@@ -199,13 +215,66 @@ function NewRequestModal({ onClose, onSubmit, loading }) {
   );
 }
 
+export function DonateModal({ request, onClose, onSubmit, loading }) {
+  const [units, setUnits] = useState(1);
+  const maxUnits = Math.min(3, request.units_needed);
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <motion.div
+        initial={{ scale: 0.92, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, y: 20 }}
+        className="glass-card rounded-2xl border border-white/10 w-full max-w-sm"
+        style={{ boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}
+      >
+        <div className="flex items-center justify-between p-6 border-b border-white/6">
+          <div>
+            <h2 className="text-lg font-black text-white">Donate Blood</h2>
+            <p className="text-xs text-white/40">For {request.patient_name}</p>
+          </div>
+          <button onClick={onClose} className="p-2 text-white/40 hover:text-white rounded-lg transition-all">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-white/55 uppercase tracking-wider mb-1.5">Units to Donate (Max {maxUnits})</label>
+            <input
+              type="number" min={1} max={maxUnits}
+              value={units}
+              onChange={(e) => setUnits(Number(e.target.value))}
+              className="w-full bg-white/5 border border-white/10 text-white text-sm rounded-input px-4 py-2.5 outline-none"
+            />
+          </div>
+          <button
+            onClick={() => onSubmit(request, units)}
+            disabled={loading || units < 1 || units > maxUnits}
+            className="w-full bg-crimson-700 hover:bg-crimson-600 disabled:opacity-60 text-white font-semibold py-3 rounded-input transition-all flex items-center justify-center gap-2"
+          >
+            {loading ? 'Processing...' : 'Confirm Donation'}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export function RequestsPage() {
   const [requests, setRequests]   = useState([]);
   const [loading, setLoading]     = useState(true);
   const [tab, setTab]             = useState('all');
   const [showModal, setShowModal] = useState(false);
+  const [donateRequest, setDonateRequest] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [donating, setDonating] = useState(false);
+  const [expandedPledges, setExpandedPledges] = useState({});
   const { user }                  = useAuthStore();
+
+  const togglePledges = (id) => {
+    setExpandedPledges(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const fetchRequests = useCallback(async () => {
     try {
@@ -247,6 +316,30 @@ export function RequestsPage() {
       fetchRequests();
     } catch {
       toast.error('Failed to cancel request');
+    }
+  };
+
+  const handleDonateSubmit = async (req, units) => {
+    setDonating(true);
+    try {
+      await requestsApi.donate(req._id || req.id, units);
+      toast.success(`Successfully pledged ${units} unit(s) for ${req.patient_name}!`);
+      setDonateRequest(null);
+      fetchRequests();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to submit donation.');
+    } finally {
+      setDonating(false);
+    }
+  };
+
+  const handlePledgeStatus = async (donationId, status) => {
+    try {
+      await requestsApi.updateDonationStatus(donationId, status);
+      toast.success(`Pledge marked as ${status}`);
+      fetchRequests();
+    } catch (err) {
+      toast.error(err.response?.data?.message || `Failed to mark pledge as ${status}`);
     }
   };
 
@@ -343,16 +436,93 @@ export function RequestsPage() {
                     <span className={`flex items-center gap-1.5 text-xs font-medium ${status.color}`}>
                       <StatusIcon className="w-3.5 h-3.5" /> {status.label}
                     </span>
-                    {(req.status === 'submitted' || req.status === 'reviewing') && canCreate && (
-                      <button
-                        onClick={() => handleCancel(id)}
-                        className="text-xs text-white/40 hover:text-red-400 border border-white/15 hover:border-red-500/30 px-3 py-1.5 rounded-input transition-all"
+                    {(user?.role === 'admin' || user?.role === 'blood_bank') ? (
+                      <select
+                        value={req.status}
+                        disabled={req.status === 'fulfilled' || req.status === 'cancelled'}
+                        onChange={async (e) => {
+                          try {
+                            await requestsApi.update(id, { status: e.target.value });
+                            toast.success('Status updated');
+                            fetchRequests();
+                          } catch {
+                            toast.error('Failed to update status');
+                          }
+                        }}
+                        className="bg-white/5 border border-white/15 text-white/80 text-xs rounded px-2 py-1 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Cancel
+                        {Object.keys(STATUS_CONFIG).map(s => (
+                          <option key={s} value={s} className="bg-base-900">{STATUS_CONFIG[s].label}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        {user?.role === 'donor' && (req.status === 'submitted' || req.status === 'reviewing') && canDonate(user?.blood_group, req.blood_group) && (
+                          <button
+                            onClick={() => setDonateRequest(req)}
+                            className="bg-crimson-700 hover:bg-crimson-600 text-white text-xs font-semibold px-3 py-1.5 rounded-input transition-all ripple-btn"
+                          >
+                            Donate Blood
+                          </button>
+                        )}
+                        {(req.status === 'submitted' || req.status === 'reviewing') && canCreate && (
+                          <button
+                            onClick={() => handleCancel(id)}
+                            className="text-xs text-white/40 hover:text-red-400 border border-white/15 hover:border-red-500/30 px-3 py-1.5 rounded-input transition-all"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {req.donations?.length > 0 && (user?.role === 'hospital' || user?.role === 'admin') && (
+                      <button
+                        onClick={() => togglePledges(id)}
+                        className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-input transition-all ${
+                          expandedPledges[id] 
+                            ? 'bg-crimson-700/20 text-crimson-400 border border-crimson-700/30' 
+                            : 'bg-white/5 text-white/40 hover:text-white hover:bg-white/10 border border-white/10'
+                        }`}
+                      >
+                        {req.donations.length} Pledges
+                        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${expandedPledges[id] ? 'rotate-180' : ''}`} />
                       </button>
                     )}
                   </div>
                 </div>
+                {req.donations?.length > 0 && (user?.role === 'hospital' || user?.role === 'admin') && (
+                  <AnimatePresence>
+                    {expandedPledges[id] && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="mt-4 pt-4 border-t border-white/5 grid gap-2 grid-cols-1 sm:grid-cols-2">
+                            {req.donations.map(d => (
+                              <div key={d._id || d.id} className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center justify-between">
+                                 <div>
+                                   <p className="text-sm font-semibold text-white">{d.donor?.name || 'Unknown Donor'}</p>
+                                   <p className="text-xs text-white/40">{d.donor?.phone || d.donor?.email}</p>
+                                 </div>
+                                 <div className="text-right">
+                                    <p className="text-sm font-bold text-crimson-400">{d.units} Unit(s)</p>
+                                    <p className="text-xs text-white/40 capitalize">{d.status}</p>
+                                    {user?.role === 'hospital' && d.status === 'scheduled' && (
+                                      <div className="flex items-center gap-2 mt-2 justify-end">
+                                        <button onClick={() => handlePledgeStatus(d._id || d.id, 'completed')} className="text-[10px] px-2 py-1 bg-green-500/20 text-green-400 border border-green-500/30 rounded uppercase tracking-wider font-bold hover:bg-green-500/30">Fulfill</button>
+                                        <button onClick={() => handlePledgeStatus(d._id || d.id, 'cancelled')} className="text-[10px] px-2 py-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded uppercase tracking-wider font-bold hover:bg-red-500/30">Cancel</button>
+                                      </div>
+                                    )}
+                                  </div>
+                              </div>
+                            ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                )}
               </motion.div>
             );
           })}
@@ -366,6 +536,14 @@ export function RequestsPage() {
             onClose={() => setShowModal(false)}
             onSubmit={handleCreate}
             loading={submitting}
+          />
+        )}
+        {donateRequest && (
+          <DonateModal
+            request={donateRequest}
+            onClose={() => setDonateRequest(null)}
+            onSubmit={handleDonateSubmit}
+            loading={donating}
           />
         )}
       </AnimatePresence>

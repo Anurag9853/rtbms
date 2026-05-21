@@ -5,7 +5,7 @@ const INITIAL_MESSAGES = [
   {
     id: '1',
     role: 'ai',
-    text: "Hi! I'm RTBMS AI, powered by GPT-4o. I have real-time access to blood inventory, donor data, and hospital records.\n\nHow can I help you today?",
+    text: "Hi! I'm RTBMS AI, powered by Gemini 2.5 Flash. I have real-time access to blood inventory, donor data, and hospital records.\n\nHow can I help you today?",
     timestamp: new Date(),
   },
 ];

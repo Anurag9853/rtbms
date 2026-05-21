@@ -14,9 +14,9 @@ import { subscribeToEmergencies } from '../../services/echoService';
 
 const navItems = [
   { path: '/dashboard',           icon: LayoutDashboard, label: 'Overview',      roles: ['admin', 'donor', 'hospital', 'blood_bank'] },
-  { path: '/dashboard/donors',    icon: Heart,           label: 'Donors',        roles: ['admin', 'donor'] },
+  { path: '/dashboard/donors',    icon: Heart,           label: 'Donors',        roles: ['donor'] },
   { path: '/dashboard/inventory', icon: Droplets,        label: 'Inventory',     roles: ['admin', 'blood_bank'] },
-  { path: '/dashboard/requests',  icon: Building2,       label: 'Requests',      roles: ['admin', 'hospital', 'blood_bank'] },
+  { path: '/dashboard/requests',  icon: Building2,       label: 'Requests',      roles: ['admin', 'donor', 'hospital', 'blood_bank'] },
   { path: '/dashboard/emergency', icon: AlertTriangle,   label: 'Emergency',     roles: ['admin', 'donor', 'hospital', 'blood_bank'] },
   { path: '/dashboard/search',    icon: Search,          label: 'Blood Search',  roles: ['admin', 'donor', 'hospital', 'blood_bank'] },
   { path: '/dashboard/analytics', icon: BarChart2,       label: 'Analytics',     roles: ['admin', 'blood_bank'] },
@@ -48,7 +48,7 @@ export function DashboardLayout() {
     : DEMO_USER;
 
   const activeNavItems = navItems.filter((item) =>
-    item.roles.includes(user.role) || user.role === 'admin'
+    item.roles.includes(user.role)
   );
 
   // ── Real-time emergency listener ─────────────────────────────────────
@@ -165,32 +165,45 @@ export function DashboardLayout() {
 
         {/* Logout + User */}
         <div className={`p-3 border-t border-white/6`}>
-          <div className={`flex items-center gap-3 p-2 rounded-lg ${sidebarCollapsed ? 'justify-center' : ''}`}>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-crimson-700 to-crimson-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-              {user.initials}
-            </div>
-            <AnimatePresence>
-              {!sidebarCollapsed && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">{user.name}</p>
-                  <p className="text-xs text-white/40 capitalize">{user.role?.replace('_', ' ')}</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <AnimatePresence>
-              {!sidebarCollapsed && (
-                <motion.button
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          {sidebarCollapsed ? (
+            /* Collapsed: icon-only logout button with tooltip */
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-crimson-700 to-crimson-500 flex items-center justify-center text-white text-xs font-bold">
+                {user.initials}
+              </div>
+              <div className="relative group">
+                <button
                   onClick={handleLogout}
-                  className="p-1.5 text-white/30 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all flex-shrink-0"
+                  className="p-2 text-white/30 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
                   aria-label="Sign out"
-                  title="Sign out"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                </motion.button>
-              )}
-            </AnimatePresence>
-          </div>
+                </button>
+                <span className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 glass rounded-lg text-xs font-medium text-white whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 border border-white/10">
+                  Sign out
+                </span>
+              </div>
+            </div>
+          ) : (
+            /* Expanded: full user row with logout */
+            <div className="flex items-center gap-3 p-2 rounded-lg">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-crimson-700 to-crimson-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                {user.initials}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white truncate">{user.name}</p>
+                <p className="text-xs text-white/40 capitalize">{user.role?.replace('_', ' ')}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="p-1.5 text-white/30 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all flex-shrink-0"
+                aria-label="Sign out"
+                title="Sign out"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Collapse toggle (desktop) */}

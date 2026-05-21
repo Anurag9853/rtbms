@@ -42,6 +42,7 @@ class InventoryController extends Controller
                 'status'           => $total < 5 ? 'critical' : ($total < 15 ? 'low' : 'sufficient'),
                 'sources_count'    => $items->count(),
                 'banks'            => $items->map(fn ($i) => [
+                    'inventory_id' => $i->_id,
                     'bank_id'   => $i->blood_bank_id,
                     'bank_name' => $i->bloodBank?->name,
                     'city'      => $i->bloodBank?->city,
@@ -102,7 +103,12 @@ class InventoryController extends Controller
      */
     public function update(Request $request, BloodInventory $inventory): JsonResponse
     {
-        $this->authorize('update', $inventory);
+        // Role-based guard: only admin or blood_bank staff can adjust inventory
+        abort_unless(
+            in_array($request->user()->role, ['admin', 'blood_bank']),
+            403,
+            'Only blood bank administrators can update inventory.'
+        );
 
         $data = $request->validate([
             'units_available'   => 'nullable|integer|min:0',

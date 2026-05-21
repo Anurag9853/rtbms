@@ -187,13 +187,13 @@ export function DonorProfile() {
             {history[0] && (
               <div>
                 <span className="text-white/40">Last Donated</span>
-                <span className="ml-2 text-white">{timeAgo(history[0].donated_at)}</span>
+                <span className="ml-2 text-white">{timeAgo(history[0].created_at ?? history[0].donated_at)}</span>
               </div>
             )}
             {eligibility && (
               <div>
                 <span className="text-white/40">Next Eligible</span>
-                {eligibility.eligible ? (
+                {eligibility.is_eligible ? (
                   <span className="ml-2 text-green-400 font-medium flex items-center gap-1 inline-flex">
                     <CheckCircle className="w-3.5 h-3.5" /> Now
                   </span>
@@ -249,7 +249,7 @@ export function DonorProfile() {
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-white">{d.bank_name ?? d.bloodBank?.name ?? 'Blood Bank'}</p>
                   <p className="text-xs text-white/40">
-                    {timeAgo(d.donated_at)} · {d.blood_group ?? profile?.blood_group} · {d.units ?? 1} unit
+                    {timeAgo(d.created_at ?? d.donated_at)} · {d.blood_group ?? profile?.blood_group} · {d.units ?? 1} unit
                   </p>
                 </div>
                 <span className="text-xs text-green-400 bg-green-400/10 border border-green-400/20 px-2.5 py-1 rounded-badge capitalize">

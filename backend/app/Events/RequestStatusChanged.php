@@ -28,9 +28,9 @@ class RequestStatusChanged implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
-            'request_id' => $this->request->id,
+            'request_id' => (string) $this->request->_id,
             'status'     => $this->request->status,
-            'updated_at' => $this->request->updated_at->toISOString(),
+            'updated_at' => optional($this->request->updated_at)->toISOString() ?? now()->toISOString(),
         ];
     }
 }

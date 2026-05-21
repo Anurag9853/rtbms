@@ -74,7 +74,13 @@ export function InventoryPage() {
   }, [fetchInventory]);
 
   const adjust = useCallback(async (item, delta) => {
-    if (!canAdjust || !item._id || item._id.length < 5) {
+    let invId = null;
+    if (item.banks?.length > 0) {
+      // Use the global inventory record for this blood group
+      invId = item.banks[0].inventory_id;
+    }
+
+    if (!canAdjust || !invId) {
       // Demo mode — local only
       setInventory((prev) =>
         prev.map((i) =>
@@ -88,7 +94,7 @@ export function InventoryPage() {
 
     setAdjusting((p) => ({ ...p, [item.blood_group]: true }));
     try {
-      await inventoryApi.update(item._id, {
+      await inventoryApi.update(invId, {
         operation: delta > 0 ? 'add' : 'subtract',
         units: Math.abs(delta),
       });
@@ -99,7 +105,7 @@ export function InventoryPage() {
     } finally {
       setAdjusting((p) => ({ ...p, [item.blood_group]: false }));
     }
-  }, [canAdjust, fetchInventory]);
+  }, [canAdjust, fetchInventory, user]);
 
   return (
     <div className="space-y-6">

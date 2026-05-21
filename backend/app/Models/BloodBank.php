@@ -26,8 +26,6 @@ class BloodBank extends Model
     protected $guarded    = [];
 
     protected $casts = [
-        'location'  => 'array',
-        'hours'     => 'array',
         'is_active' => 'boolean',
     ];
 
